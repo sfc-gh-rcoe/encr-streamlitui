@@ -7,8 +7,6 @@ import logging
 from datetime import datetime, timedelta
 from snowflake.snowpark import Session
 
-st.set_page_config(page_title="Snowflake FF3 encryption demo")
-
 def format_values():
 	t_reformatted = "{:,}".the_value
 	
@@ -42,8 +40,6 @@ m_session1 = Session.builder.configs(sec_auth_info).create()
 
 m_session2 = Session.builder.configs(auth_info).create()
 record_count = 0
-
-
 
 c1, c2 = st.columns(2)
 
