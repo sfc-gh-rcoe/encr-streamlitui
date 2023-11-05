@@ -7,6 +7,7 @@ import os
 import logging
 from datetime import datetime, timedelta
 from snowflake.snowpark import Session
+from snowflake.snowpark.functions import col
 
 st.set_page_config(page_title="Overlap Matching Demo")
 
@@ -51,13 +52,13 @@ if ((uploaded_files)):
 	for t_file in uploaded_files:
 		if t_file is not None:
 			amt_of_data = t_file.getvalue()
-			st.write(amt_of_data)
+			# st.write(amt_of_data)
 
 			str_io = StringIO(t_file.getvalue().decode("utf-8"))
 			# st.write(str_io)
 
 			str_data = str_io.read()
-			st.write(str_data)
+			# st.write(str_data)
 
 			df = pd.read_csv(t_file)
 			t_df = t_df.append(df)
@@ -73,14 +74,16 @@ if ((uploaded_files)):
 		# snow_df.write.mode("overwrite").save_as_table("TMP_MATCH_DEMO")
 		if snow_df:
 			st.write("Records in the uploaded file, now resident in a Snowflake Table")
-			st.dataframe(snow_df.to_pandas())
+			# st.dataframe(snow_df.to_pandas())
+			# snow_df = m_session1.table("TMP_MATCH_DEMO")
+			st.write(snow_df.count())
 
 # l_df1.head(10)
 # l_df1.info()
 if record_count > 10:
 	c3, c4 = st.columns(2)
 	with c3:
-		st.write(snow_df.to_pandas())
+		st.write(snow_df.count())
 	with c4:
 		wh_size = st.radio("Warehouse Size?", ["XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "XXLARGE"], disabled = False, horizontal = True)
 	t_message = "Snowpark Session One: Call to to_pandas() method: with specified columns: {}".format("DECRYPTED")
@@ -99,20 +102,23 @@ if record_count > 10:
 					ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', NAME, $userkeys) as name,\
 					ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', PHONE, $userkeys) as phone\
 					FROm {} LIMIT {}".format(os.environ["ff3_target_table"].upper(), record_count))
-	l_df1 = m_df1.limit(200).to_pandas()
+	# l_df1 = m_df1.limit(200).to_pandas()
 	t_end = datetime.now()
 	d_table_name = "CUST_DETOKENIZED_" + t_end.strftime("%H_%M_%S")
 	m_table_name = "OVERLAP_MATCHES_" + t_end.strftime("%H_%M_%S")
-	matched_df = snow_df.join(m_df1, (snow_df["emailaddress"] == m_df1["EMAIL"]))
+	matched_df = snow_df.join(m_df1, col("emailaddress") == col("EMAIL"))
+	# matched_df = snow_df.join(m_df1, snow_df["emailaddress"] == col("EMAIL"))
+	# matched_df = snow_df.join(m_df1, col("EMAIL") == col("emailaddress"))
 	m_df1.write.mode("overwrite").save_as_table(d_table_name)
 	matched_df.write.mode("overwrite").save_as_table(m_table_name)
 	t_end = datetime.now()
 	the_delta =  t_end.strptime(t_end.strftime("%H:%M:%S"), "%H:%M:%S") - t_start.strptime(t_start.strftime("%H:%M:%S"), "%H:%M:%S")
-	t_timing_statement = "Start Time: {} / End Time: {}\n | Total Query Time: {}\n: Total Record Count: {:,} | {}".format(t_start.strftime("%H:%M:%S"), t_end.strftime("%H:%M:%S"), the_delta, m_df1.count(), wh_info)
+	t_timing_statement = "Start Time: {} / End Time: {}\n | Total Query Time: {}\n".format(t_start.strftime("%H:%M:%S"), t_end.strftime("%H:%M:%S"), the_delta)
 	# st.dataframe(next(l_df1))
 	if wh_size != "XSMALL":
 		m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {}".format(wh_info, "XSMALL")).collect()
 
-	st.dataframe(matched_df.to_pandas())
+	# st.dataframe(matched_df.to_pandas())
 	st.write(t_timing_statement)
+	st.write("Overlap Match: {}".format(matched_df.count()))
 
