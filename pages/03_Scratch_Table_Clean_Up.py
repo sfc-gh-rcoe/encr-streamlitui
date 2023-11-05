@@ -55,3 +55,5 @@ drop_matched_table = m_session1.sql("DROP TABLE {}".format(m_table_name)).collec
 st.write(drop_matched_table)
 
 drop_tmp_match_table = m_session1.sql("DROP TABLE {}".format(tmp_match_table))
+
+st.write(drop_tmp_match_table)
