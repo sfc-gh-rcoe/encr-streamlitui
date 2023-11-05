@@ -42,6 +42,7 @@ the_time = datetime.now()
 
 d_table_name = st.session_state["d_table_name"]
 m_table_name = st.session_state["matched_table_name"]
+tmp_match_table = st.session_state["tmp_match_table"]
 
 m_session1 = Session.builder.configs(auth_info).create()
 
@@ -52,3 +53,5 @@ st.write(drop_d_table)
 drop_matched_table = m_session1.sql("DROP TABLE {}".format(m_table_name)).collect()
 
 st.write(drop_matched_table)
+
+drop_tmp_match_table = m_session1.sql("DROP TABLE {}".format(tmp_match_table))

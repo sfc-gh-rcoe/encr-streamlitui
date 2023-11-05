@@ -64,7 +64,9 @@ if ((uploaded_files)):
 			t_df = t_df.append(df)
 
 	st.dataframe(t_df)
-	snow_df = m_session1.write_pandas(t_df, "TMP_MATCH_DEMO", auto_create_table=True)
+	tmp_match_table = os.environ["tmp_match_table"]
+	snow_df = m_session1.write_pandas(t_df, tmp_match_table, auto_create_table=True)
+	st.session_state["tmp_match_table"] = tmp_match_table
 
 	c1, c2 = st.columns(2)
 
@@ -108,11 +110,12 @@ if record_count > 10:
 		d_table_name = "CUST_DETOKENIZED_" + t_end.strftime("%H_%M_%S")
 		m_table_name = "OVERLAP_MATCHES_" + t_end.strftime("%H_%M_%S")
 		st.session_state["matched_table_name"] = m_table_name
+		st.session_state["d_table_name"] = d_table_name
 		matched_df = snow_df.join(m_df1, col("emailaddress") == col("EMAIL"))
 		# matched_df = snow_df.join(m_df1, snow_df["emailaddress"] == col("EMAIL"))
 		# matched_df = snow_df.join(m_df1, col("EMAIL") == col("emailaddress"))
-		m_df1.write.mode("overwrite").save_as_table(d_table_name)
-		matched_df.write.mode("overwrite").save_as_table(m_table_name)
+		m_df1.write.mode("overwrite").save_as_table(table_name=d_table_name, table_type='transient')
+		matched_df.write.mode("overwrite").save_as_table(table_name=m_table_name, table_type='transient')
 		t_end = datetime.now()
 		the_delta =  t_end.strptime(t_end.strftime("%H:%M:%S"), "%H:%M:%S") - t_start.strptime(t_start.strftime("%H:%M:%S"), "%H:%M:%S")
 		t_timing_statement = "Start Time: {} / End Time: {}\n | Total Query Time: {}\n".format(t_start.strftime("%H:%M:%S"), t_end.strftime("%H:%M:%S"), the_delta)
