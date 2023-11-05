@@ -85,40 +85,43 @@ if record_count > 10:
 	with c3:
 		st.write(snow_df.count())
 	with c4:
-		wh_size = st.radio("Warehouse Size?", ["XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "XXLARGE"], disabled = False, horizontal = True)
+		wh_size = st.radio("Warehouse Size?", ["NONE","XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "XXLARGE"], disabled = False, horizontal = True)
 	t_message = "Snowpark Session One: Call to to_pandas() method: with specified columns: {}".format("DECRYPTED")
 	# print(t_message)
 	# logging.info(t_message)
-	logger.info(t_message)
-	# m_df1 = m_session1.sql("SELECT email, phone, snowssn_eudf(ssn) FROM {}".format(os.environ["source_table"].upper()))
-	m_session1.sql("ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = 2200").collect()
-	wh_info = m_session1.get_current_warehouse()
-	m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {} WAIT_FOR_COMPLETION = TRUE".format(wh_info, wh_size)).collect()
-	t_start = datetime.now()
+	if wh_size != "NONE":
+		logger.info(t_message)
+		# m_df1 = m_session1.sql("SELECT email, phone, snowssn_eudf(ssn) FROM {}".format(os.environ["source_table"].upper()))
+		m_session1.sql("ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = 2200").collect()
+		wh_info = m_session1.get_current_warehouse()
+		m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {} WAIT_FOR_COMPLETION = TRUE".format(wh_info, wh_size)).collect()
+		t_start = datetime.now()
 
-	m_session1.sql("{}".format(os.environ["userkeys"])).collect()
-	# m_df1 = m_session1.sql("SELECT EMAIL, PHONE, SNOWSSN_EUDF(ssn), SNOWSSN_EUDF(ssn2), SNOWSSN_EUDF(ssn3) FROm {} LIMIT {}".format(os.environ["source_table"].upper(), record_count))
-	m_df1 = m_session1.sql("SELECT ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', EMAIL, $userkeys) as email,\
-					ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', NAME, $userkeys) as name,\
-					ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', PHONE, $userkeys) as phone\
-					FROm {} LIMIT {}".format(os.environ["ff3_target_table"].upper(), record_count))
-	# l_df1 = m_df1.limit(200).to_pandas()
-	t_end = datetime.now()
-	d_table_name = "CUST_DETOKENIZED_" + t_end.strftime("%H_%M_%S")
-	m_table_name = "OVERLAP_MATCHES_" + t_end.strftime("%H_%M_%S")
-	matched_df = snow_df.join(m_df1, col("emailaddress") == col("EMAIL"))
-	# matched_df = snow_df.join(m_df1, snow_df["emailaddress"] == col("EMAIL"))
-	# matched_df = snow_df.join(m_df1, col("EMAIL") == col("emailaddress"))
-	m_df1.write.mode("overwrite").save_as_table(d_table_name)
-	matched_df.write.mode("overwrite").save_as_table(m_table_name)
-	t_end = datetime.now()
-	the_delta =  t_end.strptime(t_end.strftime("%H:%M:%S"), "%H:%M:%S") - t_start.strptime(t_start.strftime("%H:%M:%S"), "%H:%M:%S")
-	t_timing_statement = "Start Time: {} / End Time: {}\n | Total Query Time: {}\n".format(t_start.strftime("%H:%M:%S"), t_end.strftime("%H:%M:%S"), the_delta)
-	# st.dataframe(next(l_df1))
-	if wh_size != "XSMALL":
-		m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {}".format(wh_info, "XSMALL")).collect()
+		m_session1.sql("{}".format(os.environ["userkeys"])).collect()
+		# m_df1 = m_session1.sql("SELECT EMAIL, PHONE, SNOWSSN_EUDF(ssn), SNOWSSN_EUDF(ssn2), SNOWSSN_EUDF(ssn3) FROm {} LIMIT {}".format(os.environ["source_table"].upper(), record_count))
+		m_df1 = m_session1.sql("SELECT ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', EMAIL, $userkeys) as email,\
+						ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', NAME, $userkeys) as name,\
+						ff3_testing_db.ff3_testing_schema.decrypt_ff3_string_pass3('KEY678901', PHONE, $userkeys) as phone\
+						FROm {} LIMIT {}".format(os.environ["ff3_target_table"].upper(), record_count))
+		# l_df1 = m_df1.limit(200).to_pandas()
+		t_end = datetime.now()
+		d_table_name = "CUST_DETOKENIZED_" + t_end.strftime("%H_%M_%S")
+		m_table_name = "OVERLAP_MATCHES_" + t_end.strftime("%H_%M_%S")
+		st.session_state["matched_table_name"] = m_table_name
+		matched_df = snow_df.join(m_df1, col("emailaddress") == col("EMAIL"))
+		# matched_df = snow_df.join(m_df1, snow_df["emailaddress"] == col("EMAIL"))
+		# matched_df = snow_df.join(m_df1, col("EMAIL") == col("emailaddress"))
+		m_df1.write.mode("overwrite").save_as_table(d_table_name)
+		matched_df.write.mode("overwrite").save_as_table(m_table_name)
+		t_end = datetime.now()
+		the_delta =  t_end.strptime(t_end.strftime("%H:%M:%S"), "%H:%M:%S") - t_start.strptime(t_start.strftime("%H:%M:%S"), "%H:%M:%S")
+		t_timing_statement = "Start Time: {} / End Time: {}\n | Total Query Time: {}\n".format(t_start.strftime("%H:%M:%S"), t_end.strftime("%H:%M:%S"), the_delta)
+		# st.dataframe(next(l_df1))
+		if wh_size != "XSMALL":
+			m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {}".format(wh_info, "XSMALL")).collect()
 
-	# st.dataframe(matched_df.to_pandas())
-	st.write(t_timing_statement)
-	st.write("Overlap Match: {}".format(matched_df.count()))
+		# st.dataframe(matched_df.to_pandas())
+		st.write(t_timing_statement)
+		matched_df = m_session1.table(m_table_name)
+		st.write("Overlap Match: {:,}".format(matched_df.count()))
 
