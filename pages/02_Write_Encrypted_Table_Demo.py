@@ -67,7 +67,7 @@ matches_df = m_session1.table(st.session_state["matched_table_name"])
 # 				"lname", os.environ["userkeys"],\
 # 				"displayname", os.environ["userkeys"], st.session_state["matched_table_name"]))
 
-enc_matches_df = m_session1.sql("SELECT 'KEY678901',\
+enc_matches_df = m_session1.sql("SELECT 'KEY678901' as keyname,\
 								ff3_testing_db.ff3_testing_schema.encrypt_ff3_string_pass3('KEY678901', {}, $userkeys) as {}, \
 								ff3_testing_db.ff3_testing_schema.encrypt_ff3_string_pass3('KEY678901', {}, $userkeys) as {}, \
 								ff3_testing_db.ff3_testing_schema.encrypt_ff3_string_pass3('KEY678901', {}, $userkeys) as {} \
@@ -80,7 +80,8 @@ st.write("Overlap matches: {:,}".format(n_records))
 
 # Display sample set of the encrypted matched table
 st.dataframe(enc_matches_df.to_pandas())
-w_df = enc_matches_df.write.mode("overwrite").save_as_table(table_name=st.session_state["matched_table_name"]+"_ENCRYPTED", table_type='transient')
+e_table_name = st.session_state["matched_table_name"] + "_ENCRYPTED"
+enc_matches_df.write.mode("overwrite").save_as_table(table_name=e_table_name, table_type='transient')
 t_end = datetime.now()
 the_delta =  t_end.strptime(t_end.strftime("%H:%M:%S"), "%H:%M:%S") - t_start.strptime(t_start.strftime("%H:%M:%S"), "%H:%M:%S")
 t_timing_statement = "Start Time: {} / End Time: {}\n | Total Query Time: {}\n".format(t_start.strftime("%H:%M:%S"), t_end.strftime("%H:%M:%S"), the_delta)
