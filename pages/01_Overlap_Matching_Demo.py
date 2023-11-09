@@ -130,16 +130,17 @@ if record_count > 10:
 		c7.metric("Start Time", "{}".format(t_start.strftime("%H:%M:%S")))
 		c8.metric("End Time", "{}".format(t_end.strftime("%H:%M:%S")))
 		try:
-			if not st.session_state['prev_delta']:
+			if not st.session_state["prev_delta"]:
 				c9.metric("Total Query Run Time", "{}".format(the_delta))
-				st.session_state['prev_delta'] = the_delta
+				st.session_state["prev_delta"] = the_delta.seconds
 
 			else:
-				c9.metric("Total Query Run Time", "{}".format(the_delta), "{:.0%}".format(st.session_state['prev_delta']))
-				st.session_state['prev-delta'] = the_delta
+				c9.metric("Total Query Run Time", "{}".format(the_delta), "{}% vs Prior Run".format(float(the_delta.seconds) - float(st.session_state["prev_delta"])), "inverse")
+				st.session_state["prev-delta"] = the_delta.seconds
 		except:
 			c9.metric("Total Query Run Time", "{}".format(the_delta))
-			st.session_state["prev_delta"] = the_delta
+			st.session_state["prev_delta"] = the_delta.seconds
+			st.write(the_delta.seconds)
 		# st.write(t_timing_statement)
 		matched_df = m_session1.table(m_table_name)
 		c10.metric("Overlap Match", "{:,}".format(matched_df.count()))
