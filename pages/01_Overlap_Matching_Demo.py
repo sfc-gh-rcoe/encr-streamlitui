@@ -75,17 +75,19 @@ if ((uploaded_files)):
 	with c2:
 		# snow_df.write.mode("overwrite").save_as_table("TMP_MATCH_DEMO")
 		if snow_df:
-			st.write("Records in the uploaded file, now resident in a Snowflake Table")
+			# st.write("Records in the uploaded file, now resident in a Snowflake Table")
 			# st.dataframe(snow_df.to_pandas())
 			# snow_df = m_session1.table("TMP_MATCH_DEMO")
-			st.write(snow_df.count())
+			# st.write(snow_df.count())
+			c2.metric("Records in the uploaded file", "{:,}".format(snow_df.count()))
 
 # l_df1.head(10)
 # l_df1.info()
 if record_count > 10:
 	c3, c4 = st.columns(2)
 	with c3:
-		st.write(snow_df.count())
+		# st.write(snow_df.count())
+		c3.metric("Number of Records", "{:,}".format(snow_df.count()))
 	with c4:
 		wh_size = st.radio("Warehouse Size?", ["NONE","XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "XXLARGE"], disabled = False, horizontal = True)
 	t_message = "Snowpark Session One: Call to to_pandas() method: with specified columns: {}".format("DECRYPTED")
@@ -133,7 +135,7 @@ if record_count > 10:
 				st.session_state['prev_delta'] = the_delta
 
 			else:
-				c9.metric("Total Query Run Time", "{}".format(the_delta), st.session_state['prev_delta'])
+				c9.metric("Total Query Run Time", "{}".format(the_delta), "{:.0%}".format(st.session_state['prev_delta']))
 				st.session_state['prev-delta'] = the_delta
 		except:
 			c9.metric("Total Query Run Time", "{}".format(the_delta))
