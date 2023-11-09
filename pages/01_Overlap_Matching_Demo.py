@@ -127,7 +127,12 @@ if record_count > 10:
 		c7, c8, c9, c10 = st.columns(4)
 		c7.metric("Start Time", "{}".format(t_start.strftime("%H:%M:%S")))
 		c8.metric("End Time", "{}".format(t_end.strftime("%H:%M:%S")))
-		c9.metric("Total Query Run Time", "{}".format(the_delta))
+		if not st.session_state['prev_delta']:
+			c9.metric("Total Query Run Time", "{}".format(the_delta))
+			st.session_state['prev_delta'] = the_delta
+		else:
+			c9.metric("Total Query Run Time", "{}".format(the_delta), st.session_state['prev_delta'])
+			st.session_state['prev-delta'] = the_delta
 		# st.write(t_timing_statement)
 		matched_df = m_session1.table(m_table_name)
 		c10.metric("Overlap Match", "{:,}".format(matched_df.count()))
