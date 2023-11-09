@@ -124,11 +124,12 @@ if record_count > 10:
 			m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {}".format(wh_info, "XSMALL")).collect()
 
 		# st.dataframe(matched_df.to_pandas())
-		c7, c8, c9 = st.columns(3)
+		c7, c8, c9, c10 = st.columns(4)
 		c7.metric("Start Time", "{}".format(t_start.strftime("%H:%M:%S")))
 		c8.metric("End Time", "{}".format(t_end.strftime("%H:%M:%S")))
-		c9.metric("Run Time", "{}".format(the_delta))
+		c9.metric("Total Query Run Time", "{}".format(the_delta))
 		st.write(t_timing_statement)
 		matched_df = m_session1.table(m_table_name)
-		st.write("Overlap Match: {:,}".format(matched_df.count()))
+		c10.metric("Overlap Match", "{:,}".format(matched_df.count()))
+		# st.write("Overlap Match: {:,}".format(matched_df.count()))
 
