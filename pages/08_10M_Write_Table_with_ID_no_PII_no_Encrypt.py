@@ -15,6 +15,7 @@ def format_values():
 	
 
 load_dotenv()
+
 auth_info = {
 	"account": os.environ["account_name"],
 	"user": os.environ["account_user"],
@@ -41,11 +42,11 @@ if wh_size != "NONE":
 	wh_info = m_session1.get_current_warehouse()
 	m_session1.sql("ALTER WAREHOUSE {} SET WAREHOUSE_SIZE = {} WAIT_FOR_COMPLETION = TRUE".format(wh_info, wh_size)).collect()
 
-	plain_text_table = os.environ["plain_text_table"]
+	plain_text_table = os.environ["10m_plain_text_table"]
 	# Display sample set of the matched table in the clear
 	t_matches_df = m_session1.table(plain_text_table).limit(15)
 
-	st.dataframe(t_matches_df.to_pandas())
+	st.dataframe(t_matches_df.limit(20).to_pandas())
 
 	m_session1.sql("{}".format(os.environ["userkeys"])).collect()
 
@@ -54,10 +55,8 @@ if wh_size != "NONE":
 	# Create a new dataframe representing the encrypted version of the matched data set
 
 	enc_matches_df = m_session1.sql("SELECT 'KEY678901' as keyname,\
-									ff3_testing_db.ff3_testing_schema.encrypt_ff3_string_pass3('KEY678901', {}, $userkeys) as {}, \
-									ff3_testing_db.ff3_testing_schema.encrypt_ff3_string_pass3('KEY678901', {}, $userkeys) as {}, \
-									ff3_testing_db.ff3_testing_schema.encrypt_ff3_string_pass3('KEY678901', {}, $userkeys) as {} \
-									FROM {}".format("fname", "fname", "displayname", "displayname", "emailaddress", "emailaddress", plain_text_table))
+								 	{} as {} \
+									FROM {}".format("user_id", "user_id", plain_text_table))
 	# Count the records in the encrypted matches table.  Diaplay the time it took and the record count
 	t_start = datetime.now()
 	n_records = enc_matches_df.count()
@@ -65,8 +64,8 @@ if wh_size != "NONE":
 	# st.write("Overlap matches: {:,}".format(n_records))
 
 	# Display sample set of the encrypted matched table
-	st.dataframe(enc_matches_df.to_pandas())
-	e_table_name = plain_text_table + "_ENCRYPTED"
+	st.dataframe(enc_matches_df.limit(20).to_pandas())
+	e_table_name = plain_text_table + "_{}_MATCHED_ID".format(t_start.strftime("%H_%M_%S"))
 	enc_matches_df.write.mode("overwrite").save_as_table(table_name=e_table_name, table_type='transient')
 	t_end = datetime.now()
 	the_delta =  t_end.strptime(t_end.strftime("%H:%M:%S"), "%H:%M:%S") - t_start.strptime(t_start.strftime("%H:%M:%S"), "%H:%M:%S")
@@ -75,14 +74,16 @@ if wh_size != "NONE":
 	c1.metric("Start Time", "{}".format(t_start.strftime("%H:%M:%S")))
 	c2.metric("End Time", "{}".format(t_end.strftime("%H:%M:%S")))
 	try:
-		if not st.session_state["se_previous_delta"]:
+		if not st.session_state["ne_previous_delta"]:
 			c3.metric("Run Time", "{}".format(the_delta))
 		else:
-			c3.metric("Run Time", "{}".format(the_delta), "{:.0%} | vs Previous Run".format((float(the_delta.seconds)/(float(st.session_state["se_previous_delta"])))))
+			c3.metric("Run Time", "{}".format(the_delta), "{:.0%} | vs Previous Run".format((float(the_delta.seconds)/(float(st.session_state["ne_previous_delta"])))))
 			# st.write("Else clause hit")
 	except:
 		c3.metric("Run Time", "{}".format(the_delta))
-		st.session_state["se_previous_delta"] = the_delta.seconds
+		st.session_state["ne_previous_delta"] = the_delta.seconds
 		# st.write("Exception hit")
 	# st.write(t_timing_statement)
-	st.metric("Record Count", "{:,}".format(enc_matches_df.count()))
+	c4, c5 = st.columns(2)
+	c4.metric("Record Count", "{:,}".format(enc_matches_df.count()))
+	c5.metric("Warehouse Size", "{}".format(wh_size))

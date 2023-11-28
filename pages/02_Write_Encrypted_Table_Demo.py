@@ -15,15 +15,6 @@ def format_values():
 	
 
 load_dotenv()
-sec_auth_info = {
-	"account": os.environ["account_name"],
-	"user": os.environ["sec_account_user"],
-	"password": os.environ["account_password"],
-	"role": os.environ["sec_account_role"],
-	"schema": os.environ["sec_account_schema"],
-	"database": os.environ["sec_account_database"],
-	"warehouse": os.environ["account_warehouse"]
-}
 
 auth_info = {
 	"account": os.environ["account_name"],
@@ -39,7 +30,7 @@ logger = get_logger(__name__)
 the_time = datetime.now()
 
 
-m_session1 = Session.builder.configs(sec_auth_info).create()
+m_session1 = Session.builder.configs(auth_info).create()
 
 m_session2 = Session.builder.configs(auth_info).create()
 record_count = 0

@@ -17,16 +17,6 @@ def format_values():
 	
 
 load_dotenv()
-sec_auth_info = {
-	"account": os.environ["account_name"],
-	"user": os.environ["sec_account_user"],
-	"password": os.environ["account_password"],
-	"role": os.environ["sec_account_role"],
-	"schema": os.environ["sec_account_schema"],
-	"database": os.environ["sec_account_database"],
-	"warehouse": os.environ["account_warehouse"]
-}
-
 auth_info = {
 	"account": os.environ["account_name"],
 	"user": os.environ["account_user"],
